@@ -79,16 +79,10 @@ deploy-infra:
 	@echo "Deploying infrastructure..."
 	kubectl apply -f k8s/namespace.yaml
 	kubectl apply -f k8s/configmaps/
-	kubectl apply -f k8s/deployments/postgres.yaml
-	kubectl apply -f k8s/deployments/redis.yaml
-	kubectl apply -f k8s/deployments/mimir.yaml
-	kubectl apply -f k8s/deployments/loki.yaml
+	kubectl apply -f k8s/deployments/
 
 deploy-apps:
 	@echo "Deploying applications..."
-	kubectl apply -f k8s/deployments/backend.yaml
-	kubectl apply -f k8s/deployments/frontend.yaml
-	kubectl apply -f k8s/deployments/ml-service.yaml
 	kubectl apply -f k8s/services/
 	@echo "Waiting for deployments..."
 	kubectl wait --for=condition=available --timeout=300s deployment --all -n shopmicro
@@ -98,6 +92,17 @@ verify:
 	@echo "Verifying deployment..."
 	kubectl get pods -n shopmicro
 	kubectl get svc -n shopmicro
+
+port-forward:
+	@echo "Setting up port forwarding..."
+	kubectl port-forward -n shopmicro svc/grafana 3000:3000 &
+	kubectl port-forward -n shopmicro svc/frontend 8080:80 &
+	kubectl port-forward -n shopmicro svc/backend 3001:3001 &
+	@echo "Services available at:"
+	@echo "  Grafana: http://localhost:3000 (admin/admin)"
+	@echo "  Frontend: http://localhost:8080"
+	@echo "  Backend: http://localhost:3001"
+
 
 test:
 	@echo "Running assessment tests..."
@@ -111,15 +116,6 @@ test:
 	@echo "Test 3: Metrics Collection"
 	-curl -s http://localhost:3001/metrics | grep shopmicro_backend || echo "Metrics not available"
 
-port-forward:
-	@echo "Setting up port forwarding..."
-	kubectl port-forward -n shopmicro svc/grafana 3000:3000 &
-	kubectl port-forward -n shopmicro svc/frontend 8080:80 &
-	kubectl port-forward -n shopmicro svc/backend 3001:3001 &
-	@echo "Services available at:"
-	@echo "  Grafana: http://localhost:3000 (admin/admin)"
-	@echo "  Frontend: http://localhost:8080"
-	@echo "  Backend: http://localhost:3001"
 
 # Easter Eggs
 easter-eggs:

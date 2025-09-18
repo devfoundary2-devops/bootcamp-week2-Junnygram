@@ -16,27 +16,27 @@ spec:
         app: mimir
     spec:
       containers:
-      - name: mimir
-        image: grafana/mimir:latest
-        ports:
-        - containerPort: 9009
-          name: http
-        - containerPort: 9095
-          name: grpc
-        args:
-        - -config.file=/etc/mimir/mimir.yaml
-        - -target=all
-        volumeMounts:
-        - name: config
-          mountPath: /etc/mimir
-        - name: data
-          mountPath: /data
+        - name: mimir
+          image: grafana/mimir:latest
+          ports:
+            - containerPort: 9009
+              name: http
+            - containerPort: 9095
+              name: grpc
+          args:
+            - -config.file=/etc/mimir/mimir.yaml
+            - -target=all
+          volumeMounts:
+            - name: config
+              mountPath: /etc/mimir
+            - name: data
+              mountPath: /data
       volumes:
-      - name: config
-        configMap:
-          name: mimir-config
-      - name: data
-        emptyDir: {}
+        - name: config
+          configMap:
+            name: mimir-config
+        - name: data
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
@@ -47,12 +47,12 @@ metadata:
     app: mimir
 spec:
   ports:
-  - port: 9009
-    targetPort: 9009
-    name: http
-  - port: 9095
-    targetPort: 9095
-    name: grpc
+    - port: 9009
+      targetPort: 9009
+      name: http
+    - port: 9095
+      targetPort: 9095
+      name: grpc
   selector:
     app: mimir
 ---
@@ -63,7 +63,7 @@ metadata:
   namespace: shopmicro
 data:
   mimir.yaml: |
-    target: [all]
+    target: all
     server:
       http_listen_port: 9009
       grpc_listen_port: 9095
@@ -72,7 +72,11 @@ data:
       storage:
         backend: filesystem
         filesystem:
-          dir: /data/mimir
+          dir: /data/mimir/blocks
+    ruler_storage:
+      backend: filesystem
+      filesystem:
+        dir: /data/mimir/ruler
     ingester:
       ring:
         replication_factor: 1
