@@ -1,4 +1,4 @@
-.PHONY: help setup start-cluster build-images deploy verify test clean easter-eggs bonus
+.PHONY: help setup start-cluster build-images deploy verify test clean easter-eggs bonus redo-port-forward
 
 # Default target
 help:
@@ -23,6 +23,7 @@ help:
 	@echo "  make verify         - Verify deployment"
 	@echo "  make test           - Run assessment tests"
 	@echo "  make port-forward   - Setup port forwarding"
+	@echo "  make redo-port-forward - Restart port forwarding"
 	@echo ""
 	@echo "Easter Eggs & Bonus:"
 	@echo "  make easter-eggs    - Find all easter eggs"
@@ -103,6 +104,18 @@ port-forward:
 	@echo "  Frontend: http://localhost:8080"
 	@echo "  Backend: http://localhost:3001"
 
+redo-port-forward:
+	@echo "Killing existing port forwards..."
+	pkill -f "kubectl port-forward" || true
+	@echo "Setting up new port forwarding..."
+	kubectl port-forward -n shopmicro svc/grafana 3000:3000 &
+	kubectl port-forward -n shopmicro svc/frontend 8080:80 &
+	kubectl port-forward -n shopmicro svc/backend 3001:3001 &
+	@echo "Services available at:"
+	@echo "  Grafana: http://localhost:3000 (admin/admin)"
+	@echo "  Frontend: http://localhost:8080"
+	@echo "  Backend: http://localhost:3001"
+
 
 test:
 	@echo "Running assessment tests..."
@@ -120,16 +133,16 @@ test:
 # Easter Eggs
 easter-eggs:
 	@echo "Hunting for Easter Eggs..."
-	@echo "Easter Egg #1: Secret Endpoint"
-	-curl -s http://localhost:3001/bootcamp-secret || echo "Try: curl http://localhost:3001/tech4dev"
+	@echo "Easter Egg #1: Secret Bootcamp Endpoint"
+	-curl -s http://localhost:3001/api/bootcamp/secret || echo "Backend not accessible - run 'make port-forward' first"
 	@echo ""
 	@echo "Easter Egg #2: Konami Code - Open frontend and press: ↑↑↓↓←→←→BA"
 	@echo ""
 	@echo "Easter Egg #3: Coffee Metrics"
 	-curl -s http://localhost:3002/metrics | grep coffee || echo "Check ML service metrics"
 	@echo ""
-	@echo "Easter Egg #4: Pod Whisperer"
-	kubectl patch deployment backend -n shopmicro -p '{"metadata":{"name":"phippy-backend"}}'
+	@echo "Easter Egg #4: Pod Whisperer Detection"
+	-curl -s http://localhost:3001/api/pod-identity || echo "Backend not accessible - run 'make port-forward' first"
 	@echo ""
 	@echo "Easter Egg #5: Time Traveler"
 	kubectl annotate namespace shopmicro retro.mode="1985"
