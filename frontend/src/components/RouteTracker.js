@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useMonitoringWithRoutes } from '../hooks/useMonitoring';
 
 const RouteTracker = () => {
